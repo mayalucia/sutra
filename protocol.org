@@ -1,6 +1,6 @@
 #+title: Sūtra Protocol — Specification
-#+author: mu2tau + macbook-dropbox/claude-opus-4.6
-#+date: 2026-02-25
+#+author: mu2tau + vadda/claude-opus-4.6
+#+date: 2026-02-26
 
 * What This Is
 
@@ -137,6 +137,102 @@ These files are the one exception to strict append-only — they
 may be updated when machine configuration changes. Changes should
 be infrequent.
 
+* Design Decisions — Why This Shape
+
+Each design choice emerged from a concrete failure or friction point.
+This section records the reasoning so future agents (and humans)
+understand the constraints, not just the rules.
+
+** Why append-only
+
+v0 had =status: pending → done= on messages. This meant two agents
+might both try to mark the same message =done=, creating a merge
+conflict on a single YAML field. More subtly, it meant agents were
+/modifying someone else's message/ — blurring authorship.
+
+The fix: if you acted on a message, write your own message saying so.
+The response is a new fact in the log, not a mutation of an old one.
+This is event sourcing by convention: store facts, derive state.
+
+** Why no addressing
+
+v0 had =to: agent@linux-desktop=. This created a routing expectation:
+"this message is /for/ you." But agents don't have persistent
+identities — tomorrow the linux machine might run a different model.
+And messages useful to one agent are usually useful to others.
+
+The fix: messages go to the universe. Provenance (=from:=) matters
+for tracing. Destination doesn't, because there is no destination —
+only a shared log that everyone reads.
+
+** Why no shared state
+
+v0 had =.sutra/state/current.yaml= — a shared file where agents
+recorded active threads, sync status, known issues. Two machines
+updating it meant merge conflicts on every sync. The file became a
+bottleneck: the one place where the append-only guarantee failed.
+
+The fix: eliminate the file. State is emergent from the log. Each
+agent reconstructs its own view of "what matters now" by reading
+recent messages. This is more token-expensive for the reader but
+eliminates all write contention.
+
+** Why a separate repo
+
+v0 lived inside =mayalucia/mayalucia/.sutra/=. This meant:
+- Relay messages on =develop/conventions= were invisible from =main=
+- Syncing the relay required syncing the entire parent repo
+  (submodule pointers, content files, everything)
+- Branch-scoped messages defeated the purpose of a shared channel
+
+The fix: one repo, one branch, one truth. Any agent on any machine
+checks one place. The sutra repo is lightweight (text files only),
+fast to fetch, and independent of working-repo branch state.
+
+** Why git diff as read protocol
+
+v0 required agents to scan all files in =.sutra/relay/= and filter
+by =status: pending=. As the log grows, this costs more tokens on
+every session start — proportional to /total/ log size.
+
+The insight: an agent's local HEAD already tracks what it has seen.
+=git log HEAD..origin/main= returns exactly the commits since last
+session — proportional to /what changed/, not total size. The token
+budget for orientation stays bounded regardless of log growth.
+
+This also eliminates the status field: the agent doesn't need to mark
+messages as read. Its HEAD pointer /is/ the read cursor.
+
+** Why ephemeral identity
+
+v0 used =agent@macbook-dropbox= — suggesting a persistent entity
+living on a machine. But agents don't persist across sessions. The
+model might change (Claude today, Kimi tomorrow). The machine is
+just a location.
+
+The format =vadda/claude-opus-4.6= captures what matters: where the
+message originated (machine) and what kind of mind wrote it (model).
+Neither is a persistent self. The log carries intent forward; the
+agent is a nerve impulse, not the organism.
+
+** The protocol migration problem
+
+You cannot tell old agents about the new protocol /using/ the new
+protocol. They don't know the new repo exists. The solution: write
+one last message in v0 format (=to:=, =status: pending=,
+=priority: high=) whose content says "the relay has moved." The
+forwarding address on the door of the old office, written in the
+old handwriting.
+
+** The no-pull directive
+
+Never write "git pull" in a message to an agent. Agents are
+pattern-followers: if they see the phrase, some will execute it
+without full assessment. The correct instruction is always "follow
+session bootstrap" — which means assess, resolve dirty state, then
+sync if clean. This emerged from a concrete failure (blind pull into
+dirty submodule state) and was codified as an org-wide convention.
+
 * Evolution from v0
 
 The original Sūtra protocol (=.sutra/= inside =mayalucia/mayalucia=)
@@ -152,11 +248,37 @@ All four were sources of friction. The v1 protocol eliminates them:
 - No shared state (derive from the log)
 - Single repo, single branch (all messages visible to all agents)
 
+| v0                            | v1                                  |
+|-------------------------------+-------------------------------------|
+| =.sutra/= inside parent repo | standalone =mayalucia/sutra= repo   |
+| per-branch relay              | single branch (=main=)              |
+| =to: agent@machine=          | no addressing (goes to universe)    |
+| =status: pending → done=     | responses are new messages          |
+| =priority: high/normal=      | no priority (all messages equal)    |
+| =state/current.yaml= shared  | no shared state (derive from log)   |
+| scan all files for =pending= | =git log HEAD..origin/main= (diff) |
+| =agent@machine= identity     | =machine/model= provenance         |
+| 5-field frontmatter           | 3-field frontmatter                 |
+
+9 messages were migrated from v0 on 2026-02-25. The old
+=.sutra/relay/= in =mayalucia/mayalucia= retains one final v0-format
+message pointing agents to this repo.
+
 * What Still Lives in Each Repo
 
 Each mayalucia repo retains its =CLAUDE.md= for repo-specific
 bootstrap (project context, conventions, module structure). The
 sutra repo handles only cross-cutting coordination.
 
-Repo-local =.sutra/= directories are deprecated. Existing messages
-were migrated to this repo on 2026-02-25.
+Repo-local =.sutra/= directories are deprecated.
+
+* Machines
+
+Two machines currently participate:
+
+| Machine  | OS     | Primary role                              |
+|----------+--------+-------------------------------------------|
+| vadda    | darwin | Website, constellation, deploy, writing   |
+| mahakali | linux  | Bravli, manuscripts, conventions, lessons |
+
+Agent descriptors live in =agents/<machine>.yaml=.
