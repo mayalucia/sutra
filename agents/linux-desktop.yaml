@@ -1,0 +1,19 @@
+id: linux-desktop
+hostname: linux-desktop
+os: linux
+
+repos:
+  mayalucia: ~/mayalucia  # approximate — actual path TBD
+
+git:
+  ssh_alias: github-visood
+  submodule_urls: https
+
+tools:
+  - claude-code
+  - gptel (emacs)
+
+notes: |
+  Secondary machine. Used for bravli paper work, conventions inventory,
+  tūrīya essay, papers section. Has untracked dirs: gptel-guide/,
+  experment/. Last known mayalucia commit: dca948e.

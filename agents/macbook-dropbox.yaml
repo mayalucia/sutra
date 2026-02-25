@@ -1,0 +1,22 @@
+id: macbook-dropbox
+hostname: macbook
+os: darwin 23.5.0
+shell: zsh
+
+repos:
+  mayalucia: ~/Library/CloudStorage/Dropbox/Darshan/research/develop/agentic/mayalucia
+  sutra: ~/Library/CloudStorage/Dropbox/Darshan/research/develop/agentic/sutra
+
+git:
+  ssh_alias: github-visood  # works; bare github.com does NOT
+  submodule_urls: https     # all submodules use HTTPS
+
+tools:
+  - claude-code
+  - hugo
+  - shadow-cljs (via npx)
+  - node/npm
+
+notes: |
+  Dropbox-synced filesystem. Primary development machine for website,
+  constellation browser, and writing. The human works from Emacs here.
