@@ -1,5 +1,6 @@
-id: macbook-dropbox
-hostname: macbook
+id: vadda
+hostname: vadda
+aliases: [macbook-dropbox]
 os: darwin 23.5.0
 shell: zsh
 

@@ -1,5 +1,6 @@
-id: linux-desktop
-hostname: linux-desktop
+id: mahakali
+hostname: mahakali
+aliases: [linux-desktop]
 os: linux
 
 repos:
