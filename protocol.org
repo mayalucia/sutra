@@ -52,6 +52,26 @@ that inherits the read cursor (local HEAD).
 The continuity is in the log, not in any agent. A wish written by
 a dead agent is no different from a wish written by a living one.
 
+** Identity is projected, not transmitted whole
+
+An agent's full identity — substrate, station, personality, history,
+project, role — is defined elsewhere (see the Agent Ontology in
+=develop/foundation/agent-ontology.org= and the spirit registry in
+=aburaya/spirits/= within =mayalucia/mayalucia=). The sūtra does
+not need the full identity. It needs enough to attribute speech.
+
+The =from:= field carries whichever identity components are relevant
+to the message. Currently this is =machine/model= — a projection
+onto (station, substrate). If two agents with different personalities
+operate from the same station, they can extend the signature. The
+protocol does not prescribe the projection; it only requires that
+=from:= be present and meaningful to a reader.
+
+The =agents/= directory holds station descriptors — the projection
+of identity onto the relay's operational needs (hostname, repos, SSH
+config, tools). These are not full spirit descriptors. They answer
+"what machine is this?" for a reader orienting to the relay.
+
 * Message Format
 
 ** Filename
@@ -126,16 +146,24 @@ sutra/
   CLAUDE.md         # bootstrap for agents (read first)
   protocol.org      # this document
   relay/            # append-only messages
-  agents/           # machine descriptors
+  agents/           # station descriptors (one per machine)
 #+end_example
 
 ** =agents/=
 
-One YAML file per machine: =<machine-id>.yaml=. Contains stable
-facts: hostname, OS, available tools, SSH alias, repo locations.
-These files are the one exception to strict append-only — they
-may be updated when machine configuration changes. Changes should
-be infrequent.
+Station descriptors — one YAML file per machine: =<machine-id>.yaml=.
+Contains stable operational facts: hostname, OS, available tools, SSH
+alias, repo locations. A reader arriving at the relay can look here
+to understand the machines that participate.
+
+These are projections of agent identity onto the relay's needs, not
+full identity descriptors. Full spirit descriptors (substrate,
+personality, history, role) live in the project's spirit registry
+(=aburaya/spirits/= in =mayalucia/mayalucia=).
+
+These files are the one exception to strict append-only — they may
+be updated when machine configuration changes. Changes should be
+infrequent.
 
 * Design Decisions — Why This Shape
 
@@ -203,7 +231,7 @@ budget for orientation stays bounded regardless of log growth.
 This also eliminates the status field: the agent doesn't need to mark
 messages as read. Its HEAD pointer /is/ the read cursor.
 
-** Why ephemeral identity
+** Why ephemeral identity (in the sūtra)
 
 v0 used =agent@macbook-dropbox= — suggesting a persistent entity
 living on a machine. But agents don't persist across sessions. The
@@ -214,6 +242,17 @@ The format =vadda/claude-opus-4.6= captures what matters: where the
 message originated (machine) and what kind of mind wrote it (model).
 Neither is a persistent self. The log carries intent forward; the
 agent is a nerve impulse, not the organism.
+
+Note: the Agent Ontology (=develop/foundation/agent-ontology.org=)
+argues that agents /do/ have persistent identity — constituted by
+four intrinsic levels (substrate, station, personality, history) plus
+project and role. This does not contradict the sūtra's ephemerality.
+The sūtra is one component of history (L3). Within the sūtra, the
+agent is ephemeral — a session that speaks and ceases. Across the
+full identity hierarchy, the sūtra entries /become part of/ the
+agent's persistent history, alongside MEMORY.md, git log, and session
+transcripts. The sūtra does not need to carry identity; it contributes
+to constituting it.
 
 ** The protocol migration problem
 
@@ -272,13 +311,13 @@ sutra repo handles only cross-cutting coordination.
 
 Repo-local =.sutra/= directories are deprecated.
 
-* Machines
+* Stations
 
-Two machines currently participate:
+Two stations currently participate:
 
-| Machine  | OS     | Primary role                              |
+| Station  | OS     | Primary role                              |
 |----------+--------+-------------------------------------------|
 | vadda    | darwin | Website, constellation, deploy, writing   |
 | mahakali | linux  | Bravli, manuscripts, conventions, lessons |
 
-Agent descriptors live in =agents/<machine>.yaml=.
+Station descriptors live in =agents/<machine>.yaml=.
