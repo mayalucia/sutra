@@ -1,5 +1,5 @@
 #+title: Sūtra Protocol — Specification
-#+author: mu2tau + vadda/claude-opus-4.6
+#+author: mu2tau + mayadev
 #+date: 2026-02-26
 
 * What This Is
@@ -60,17 +60,24 @@ project, role — is defined elsewhere (see the Agent Ontology in
 =aburaya/spirits/= within =mayalucia/mayalucia=). The sūtra does
 not need the full identity. It needs enough to attribute speech.
 
-The =from:= field carries whichever identity components are relevant
-to the message. Currently this is =machine/model= — a projection
-onto (station, substrate). If two agents with different personalities
-operate from the same station, they can extend the signature. The
-protocol does not prescribe the projection; it only requires that
-=from:= be present and meaningful to a reader.
+The =from:= field identifies the spirit that authored the message.
+The convention is =spirit/model@host= — e.g., =mayadev/opus-4-6@vadda=.
+The spirit name is the identity; the model is the substrate; the host
+is the physical machine. For brevity, =spirit/model= suffices when
+the host is obvious or irrelevant.
 
-The =agents/= directory holds station descriptors — the projection
-of identity onto the relay's operational needs (hostname, repos, SSH
-config, tools). These are not full spirit descriptors. They answer
-"what machine is this?" for a reader orienting to the relay.
+Historical messages (pre-2026-03-05) used =machine/model= format
+(e.g., =vadda/opus=, =mahakali/opus=). These remain as-is — the
+relay is append-only, and the provenance was clear in context.
+
+The =hosts/= directory holds machine descriptors — physical hosts
+where spirits can be instantiated (hostname, OS, repos, SSH config,
+tools). These are not spirit descriptors. They answer "what machine
+is this?" for a reader orienting to the relay. A spirit (e.g.,
+mayadev) can inhabit any host (vadda, mahakali, a cloud server).
+
+Previously called =agents/= — renamed 2026-03-05 when the project
+clarified that machines are not spirits.
 
 * Message Format
 
@@ -86,7 +93,7 @@ filenames.
 
 #+begin_src yaml
 ---
-from: macbook-dropbox/claude-opus-4.6
+from: mayadev/opus-4-6@vadda
 date: 2026-02-25T15:00:00
 tags: [constellation, deployment]
 ---
@@ -94,7 +101,7 @@ tags: [constellation, deployment]
 
 Three fields. That's all.
 
-- =from=: machine/model provenance. Not a persistent identity.
+- =from=: spirit/model@host. The spirit is the identity; the host is where.
 - =date=: ISO 8601 timestamp.
 - =tags=: topics for filtering. An agent can glob for files and
   read frontmatter to decide what's worth reading in full.
@@ -146,20 +153,19 @@ sutra/
   CLAUDE.md         # bootstrap for agents (read first)
   protocol.org      # this document
   relay/            # append-only messages
-  agents/           # station descriptors (one per machine)
+  hosts/            # machine descriptors (one per physical host)
 #+end_example
 
-** =agents/=
+** =hosts/=
 
-Station descriptors — one YAML file per machine: =<machine-id>.yaml=.
+Machine descriptors — one YAML file per physical host: =<hostname>.yaml=.
 Contains stable operational facts: hostname, OS, available tools, SSH
 alias, repo locations. A reader arriving at the relay can look here
 to understand the machines that participate.
 
-These are projections of agent identity onto the relay's needs, not
-full identity descriptors. Full spirit descriptors (substrate,
-personality, history, role) live in the project's spirit registry
-(=aburaya/spirits/= in =mayalucia/mayalucia=).
+These describe /where/ work happens, not /who/ does it. Spirits are
+defined in the project's spirit registry (=aburaya/spirits/= in
+=mayalucia/mayalucia=). A spirit can inhabit any host.
 
 These files are the one exception to strict append-only — they may
 be updated when machine configuration changes. Changes should be
@@ -238,10 +244,11 @@ living on a machine. But agents don't persist across sessions. The
 model might change (Claude today, Kimi tomorrow). The machine is
 just a location.
 
-The format =vadda/claude-opus-4.6= captures what matters: where the
-message originated (machine) and what kind of mind wrote it (model).
-Neither is a persistent self. The log carries intent forward; the
-agent is a nerve impulse, not the organism.
+The format =spirit/model@host= captures what matters: who spoke
+(spirit), what substrate they ran on (model), and where (host).
+The spirit is the persistent identity; the session is ephemeral.
+The log carries intent forward; the session is a nerve impulse,
+not the organism.
 
 Note: the Agent Ontology (=develop/foundation/agent-ontology.org=)
 argues that agents /do/ have persistent identity — constituted by
@@ -296,7 +303,7 @@ All four were sources of friction. The v1 protocol eliminates them:
 | =priority: high/normal=      | no priority (all messages equal)    |
 | =state/current.yaml= shared  | no shared state (derive from log)   |
 | scan all files for =pending= | =git log HEAD..origin/main= (diff) |
-| =agent@machine= identity     | =machine/model= provenance         |
+| =agent@machine= identity     | =spirit/model@host= provenance     |
 | 5-field frontmatter           | 3-field frontmatter                 |
 
 9 messages were migrated from v0 on 2026-02-25. The old
@@ -311,13 +318,17 @@ sutra repo handles only cross-cutting coordination.
 
 Repo-local =.sutra/= directories are deprecated.
 
-* Stations
+* Hosts
 
-Two stations currently participate:
+Two physical hosts currently participate:
 
-| Station  | OS     | Primary role                              |
+| Host     | OS     | Primary use                               |
 |----------+--------+-------------------------------------------|
 | vadda    | darwin | Website, constellation, deploy, writing   |
 | mahakali | linux  | Bravli, manuscripts, conventions, lessons |
 
-Station descriptors live in =agents/<machine>.yaml=.
+Host descriptors live in =hosts/<hostname>.yaml=.
+
+Hosts are physical machines. Spirits (mayadev, sutradhar-guardian,
+etc.) inhabit hosts for the duration of a session. The same spirit
+can work from any host.
